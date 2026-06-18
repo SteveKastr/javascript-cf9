@@ -2,12 +2,12 @@ const daysGR = ['Κυριακή', 'Δευτέρα', 'Τρίτη', 'Τετάρτ�
 const monthsGR = ['Ιανουαρίου', 'Φεβρουαρίου', 'Μαρτίου', 'Απριλίου', 'Μαΐου', 'Ιουνίου', 'Ιουλίου', 'Αυγούστου', 'Σεπτεμβρίου', 'Οκτωβρίου', 'Νοεμβρίου', 'Δεκεμβρίου']
 
 let notes = []
-let count = 0
+let nextId = 1
 
 window.addEventListener('DOMContentLoaded', function() {
-    const inputNote = this.document.querySelector('#inputNote')
+    const inputNote = document.querySelector('#inputNote')
     const addButton = document.querySelector('#addNoteBtn')
-    const getNoteValue = () => inputNote.ariaValueMax.trim()
+    const getNoteValue = () => inputNote.value.trim()
 
     const getNewNote = () => ({
         key: nextId,
@@ -17,7 +17,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
     this.setInterval(() => printGrDate(), 1000)
 
-     addButton.addEventListener('click', () => {
+    addButton.addEventListener('click', () => {
         onInsertHandler(getNewNote())
         inputNote.value = ''
     })
@@ -33,6 +33,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
 })
 
+
 function printGrDate() {
     const now = new Date()
     const pad = n => String(n).padStart(2, '0')
@@ -41,3 +42,72 @@ function printGrDate() {
     const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
     document.getElementById('datetxt').innerHTML = `${dateStr}<br>${timeStr}`
 }
+
+
+
+function onInsertHandler(noteObj) {
+    if (!noteObj?.note) return
+
+    insertNote(noteObj)
+    renderNotes()
+}
+
+function insertNote(noteObj) {
+    notes = [...notes, noteObj] // immutable insert
+    nextId++
+}
+
+
+function renderNotes() {
+    const  notesContainer = document.querySelector('#notesWrapper')
+    notesContainer.textContent = ''
+    notes.forEach(noteObj => notesContainer.appendChild(createNoteElement(noteObj)))    // todo
+}
+
+
+function strikeThrough(key) {
+    notes = notes.map(noteObj => noteObj.key === key ? {...noteObj, softDeleted: !noteObj.softDeleted } : noteObj) // immutable update
+    renderNotes()
+}
+
+function deleteNote(key) {
+    notes = notes.filter(noteObj => noteObj.key !== key) // immutable delete
+    renderNotes()
+}
+
+function createNoteElement(noteObj) {
+    const div = document.createElement('div')
+    div.id = 'noteTemplate' + noteObj.key
+    div.className = 'flex justify-between items-center px-[2px] border-b border-black'
+
+    const checkbox = document.createElement('input')
+    checkbox.id = 'checkbox' + noteObj.key
+    checkbox.type = 'checkbox'
+    checkbox.checked = noteObj.softDeleted
+    checkbox.addEventListener('click', () => strikeThrough(noteObj.key))
+
+
+    const label = document.createElement('label')
+    label.htmlFor = checkbox.id
+    label.textContent = noteObj.note
+    label.className = `w-[200px] max-h-[100px] overflow-hidden break-words whitespace-normal text-base ${noteObj.softDeleted ? 'line-through text-gray-500' : ''}`
+
+
+    const deleteBtn = document.createElement('button')
+    deleteBtn.id = 'deleteBtn' + noteObj.key
+    deleteBtn.textContent = 'X'
+    deleteBtn.className = 'w-[35px] h-[35px] rounded-full border border-black'
+    deleteBtn.addEventListener('click', () => deleteNote(noteObj.key))
+
+    div.appendChild(checkbox)
+    div.appendChild(label)
+    div.appendChild(deleteBtn)
+    
+    return div
+}
+
+
+
+
+
+      
